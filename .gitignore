@@ -3,10 +3,27 @@ wook2woke_server
 
 # Data
 *.db
+*.db-shm
+*.db-wal
 photos/
 
 # Environment
 .env
 
+# Go
+*.test
+*.out
+vendor/
+
 # macOS
 .DS_Store
+.AppleDouble
+.LSOverride
+
+# Docker
+*.deb
+
+# Cloudflare
+*.pem
+*.json
+.cloudflared/
