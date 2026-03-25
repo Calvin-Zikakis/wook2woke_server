@@ -351,8 +351,8 @@ var galleryTmpl = template.Must(template.New("gallery").Funcs(tmplFuncs).Parse(`
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: system-ui; background: #0a0a0a; color: #e0e0e0; padding: 1rem; }
   /* Header */
-  header { text-align: center; margin-bottom: 0.5rem; position: relative; }
-  .logout-btn { position: absolute; top: 0; right: 0; font-size: 0.75rem; letter-spacing: 0.1em; text-transform: uppercase; color: #666; background: none; border: 1px solid #333; border-radius: 6px; padding: 0.3rem 0.7rem; cursor: pointer; text-decoration: none; }
+  header { text-align: center; margin-bottom: 0.5rem; }
+  .logout-btn { font-size: 0.8rem; letter-spacing: 0.12em; text-transform: uppercase; color: #555; background: none; border: 1px solid #2a2a2a; border-radius: 6px; padding: 0.3rem 0.9rem; cursor: pointer; text-decoration: none; }
   .logout-btn:hover { color: #ccc; border-color: #666; }
   .header-title { font-size: 2.4rem; font-weight: 900; letter-spacing: -0.02em; line-height: 1; }
   .header-title .wook { color: #f97316; }
@@ -430,7 +430,6 @@ var galleryTmpl = template.Must(template.New("gallery").Funcs(tmplFuncs).Parse(`
 </style>
 </head><body>
 <header>
-  {{if .IsAdmin}}<form action="/logout" method="post"><button class="logout-btn" type="submit">Logout</button></form>{{else}}<a href="/login" class="logout-btn">Admin Login</a>{{end}}
   <div class="header-title">
     <span class="wook">WOOK</span><span class="sep">⟷</span><span class="woke">WOKE</span>
   </div>
@@ -439,8 +438,9 @@ var galleryTmpl = template.Must(template.New("gallery").Funcs(tmplFuncs).Parse(`
     <div class="bar"></div>
     <span class="bar-label">woke</span>
   </div>
-  <div style="text-align:center;margin-bottom:1.5rem">
+  <div style="text-align:center;margin-bottom:1.5rem;display:flex;justify-content:center;gap:0.6rem;">
     <a href="/live" style="font-size:0.8rem;letter-spacing:0.12em;text-transform:uppercase;color:#555;text-decoration:none;border:1px solid #2a2a2a;border-radius:6px;padding:0.3rem 0.9rem;">⬤ Live View</a>
+    {{if .IsAdmin}}<form action="/logout" method="post" style="margin:0"><button class="logout-btn" type="submit">Logout</button></form>{{else}}<a href="/login" class="logout-btn">Admin Login</a>{{end}}
   </div>
 </header>
 <div class="controls">
