@@ -1,0 +1,12 @@
+# Binary
+wook2woke_server
+
+# Data
+*.db
+photos/
+
+# Environment
+.env
+
+# macOS
+.DS_Store
