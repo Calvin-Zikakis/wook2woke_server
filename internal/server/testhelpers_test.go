@@ -53,12 +53,13 @@ func newTestServer(t *testing.T) *Server {
 	return &Server{
 		db: db,
 		cfg: Config{
-			APIKey:       "test-api-key",
-			ViewPassword: "test-password",
-			PhotoDir:     photoDir,
-			SessionTTL:   time.Hour,
+			APIKey:        "test-api-key",
+			ViewPassword:  "test-password",
+			AdminPassword: "test-admin-password",
+			PhotoDir:      photoDir,
+			SessionTTL:    time.Hour,
 		},
-		sessions: make(map[string]time.Time),
+		sessions: make(map[string]sessionData),
 		mu:       sync.RWMutex{},
 	}
 }

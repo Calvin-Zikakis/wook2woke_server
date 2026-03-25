@@ -15,7 +15,8 @@ func main() {
 	cfg := server.Config{
 		Port:            envOrDefault("PORT", "8080"),
 		APIKey:          requireEnv("API_KEY"),
-		ViewPassword:    requireEnv("VIEW_PASSWORD"),
+		ViewPassword:    os.Getenv("VIEW_PASSWORD"),
+		AdminPassword:   requireEnv("ADMIN_PASSWORD"),
 		PhotoDir:        envOrDefault("PHOTO_DIR", "./photos"),
 		DBPath:          envOrDefault("DB_PATH", "./wook2woke.db"),
 		SessionTTL:      24 * time.Hour,

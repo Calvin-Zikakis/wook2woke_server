@@ -1,6 +1,7 @@
 package server
 
 import (
+	"bytes"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -160,5 +161,131 @@ func TestPhoto_NotFound(t *testing.T) {
 
 	if rr.Code != http.StatusNotFound {
 		t.Fatalf("expected 404, got %d", rr.Code)
+	}
+}
+
+func TestDelete_Success(t *testing.T) {
+	srv := newTestServer(t)
+	writeTestPhoto(t, srv.cfg.PhotoDir, "del.jpg")
+	srv.db.Exec("INSERT INTO entries (woke_score, description, photo_path) VALUES (?, ?, ?)", 3, "to delete", "del.jpg")
+
+	req := httptest.NewRequest("DELETE", "/api/entries/1", nil)
+	req.SetPathValue("id", "1")
+	rr := httptest.NewRecorder()
+	srv.handleDelete(rr, req)
+
+	if rr.Code != http.StatusNoContent {
+		t.Fatalf("expected 204, got %d", rr.Code)
+	}
+
+	var count int
+	srv.db.QueryRow("SELECT COUNT(*) FROM entries").Scan(&count)
+	if count != 0 {
+		t.Fatalf("expected 0 entries after delete, got %d", count)
+	}
+
+	if _, err := os.Stat(filepath.Join(srv.cfg.PhotoDir, "del.jpg")); !os.IsNotExist(err) {
+		t.Fatal("expected photo file to be deleted")
+	}
+}
+
+func TestDelete_NotFound(t *testing.T) {
+	srv := newTestServer(t)
+
+	req := httptest.NewRequest("DELETE", "/api/entries/99", nil)
+	req.SetPathValue("id", "99")
+	rr := httptest.NewRecorder()
+	srv.handleDelete(rr, req)
+
+	if rr.Code != http.StatusNotFound {
+		t.Fatalf("expected 404, got %d", rr.Code)
+	}
+}
+
+func TestDelete_InvalidID(t *testing.T) {
+	srv := newTestServer(t)
+
+	req := httptest.NewRequest("DELETE", "/api/entries/abc", nil)
+	req.SetPathValue("id", "abc")
+	rr := httptest.NewRecorder()
+	srv.handleDelete(rr, req)
+
+	if rr.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d", rr.Code)
+	}
+}
+
+func TestDelete_AlsoRemovesRescores(t *testing.T) {
+	srv := newTestServer(t)
+	writeTestPhoto(t, srv.cfg.PhotoDir, "with-rescores.jpg")
+	srv.db.Exec("INSERT INTO entries (woke_score, description, photo_path) VALUES (?, ?, ?)", 4, "desc", "with-rescores.jpg")
+	srv.db.Exec("INSERT INTO rescores (entry_id, woke_score, subject, description) VALUES (1, 5, 'human', 'rescored')")
+	srv.db.Exec("INSERT INTO rescores (entry_id, woke_score, subject, description) VALUES (1, 6, 'human', 'rescored again')")
+
+	req := httptest.NewRequest("DELETE", "/api/entries/1", nil)
+	req.SetPathValue("id", "1")
+	srv.handleDelete(httptest.NewRecorder(), req)
+
+	var count int
+	srv.db.QueryRow("SELECT COUNT(*) FROM rescores WHERE entry_id = 1").Scan(&count)
+	if count != 0 {
+		t.Fatalf("expected rescores to be deleted, got %d", count)
+	}
+}
+
+func TestPromoteRescore_Success(t *testing.T) {
+	srv := newTestServer(t)
+	srv.db.Exec("INSERT INTO entries (woke_score, description, photo_path) VALUES (?, ?, ?)", 3, "original", "p.jpg")
+
+	body := bytes.NewBufferString(`{"wokeScore":6,"description":"promoted desc"}`)
+	req := httptest.NewRequest("PUT", "/api/entries/1", body)
+	req.Header.Set("Content-Type", "application/json")
+	req.SetPathValue("id", "1")
+	rr := httptest.NewRecorder()
+	srv.handlePromoteRescore(rr, req)
+
+	if rr.Code != http.StatusNoContent {
+		t.Fatalf("expected 204, got %d", rr.Code)
+	}
+
+	var score int
+	var desc string
+	srv.db.QueryRow("SELECT woke_score, description FROM entries WHERE id = 1").Scan(&score, &desc)
+	if score != 6 {
+		t.Fatalf("expected score 6 after promote, got %d", score)
+	}
+	if desc != "promoted desc" {
+		t.Fatalf("expected 'promoted desc', got %s", desc)
+	}
+}
+
+func TestPromoteRescore_InvalidID(t *testing.T) {
+	srv := newTestServer(t)
+
+	body := bytes.NewBufferString(`{"wokeScore":5,"description":"test"}`)
+	req := httptest.NewRequest("PUT", "/api/entries/abc", body)
+	req.Header.Set("Content-Type", "application/json")
+	req.SetPathValue("id", "abc")
+	rr := httptest.NewRecorder()
+	srv.handlePromoteRescore(rr, req)
+
+	if rr.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d", rr.Code)
+	}
+}
+
+func TestPromoteRescore_InvalidBody(t *testing.T) {
+	srv := newTestServer(t)
+	srv.db.Exec("INSERT INTO entries (woke_score, description, photo_path) VALUES (?, ?, ?)", 3, "original", "p.jpg")
+
+	body := bytes.NewBufferString(`not-json`)
+	req := httptest.NewRequest("PUT", "/api/entries/1", body)
+	req.Header.Set("Content-Type", "application/json")
+	req.SetPathValue("id", "1")
+	rr := httptest.NewRecorder()
+	srv.handlePromoteRescore(rr, req)
+
+	if rr.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d", rr.Code)
 	}
 }
