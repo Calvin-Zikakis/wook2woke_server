@@ -2,6 +2,43 @@ package server
 
 import "html/template"
 
+var scoreLabels = []string{
+	"NOT A CRYSTAL",
+	"LEVEL 3 WOOK",
+	"LEVEL 2 WOOK",
+	"LEVEL 1 WOOK",
+	"NORMIE",
+	"LEVEL 1 WOKE",
+	"LEVEL 2 WOKE",
+	"LEVEL 3 WOKE",
+}
+
+var scoreVibes = []string{
+	"Not a crystal or person at all",
+	"Raw, earthy, chaotic, festival energy",
+	"Warm, cloudy, irregular, rough",
+	"Leaning wook",
+	"Dead center, neither wook nor woke",
+	"Leaning woke",
+	"Cool, clear, geometric, polished",
+	"Polished, geometric, precise, museum-ready",
+}
+
+var tmplFuncs = template.FuncMap{
+	"scoreLabel": func(s int) string {
+		if s < 0 || s > 7 {
+			return "OFF THE CHARTS"
+		}
+		return scoreLabels[s]
+	},
+	"scoreVibe": func(s int) string {
+		if s < 0 || s > 7 {
+			return "Score outside the 0–7 range"
+		}
+		return scoreVibes[s]
+	},
+}
+
 var loginTmpl = template.Must(template.New("login").Parse(`<!DOCTYPE html>
 <html><head>
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -27,7 +64,7 @@ var loginTmpl = template.Must(template.New("login").Parse(`<!DOCTYPE html>
 </div>
 </body></html>`))
 
-var galleryTmpl = template.Must(template.New("gallery").Parse(`<!DOCTYPE html>
+var galleryTmpl = template.Must(template.New("gallery").Funcs(tmplFuncs).Parse(`<!DOCTYPE html>
 <html><head>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>wook2woke</title>
@@ -42,7 +79,9 @@ var galleryTmpl = template.Must(template.New("gallery").Parse(`<!DOCTYPE html>
   .card { background: #1a1a1a; border-radius: 12px; overflow: hidden; cursor: pointer; position: relative; }
   .card img { width: 100%; aspect-ratio: 4/3; object-fit: cover; display: block; }
   .card .info { padding: 1rem; }
+  .card .score-row { display: flex; align-items: baseline; gap: 0.6rem; }
   .card .score { font-size: 2rem; font-weight: bold; color: #4f46e5; }
+  .card .level { font-size: 0.75rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #818cf8; border: 1px solid #312e81; border-radius: 4px; padding: 0.15rem 0.4rem; cursor: default; white-space: nowrap; }
   .card .desc { margin-top: 0.5rem; line-height: 1.4; }
   .card .time { margin-top: 0.5rem; font-size: 0.8rem; color: #666; }
   .card .rescore-badge { position: absolute; top: 0.5rem; right: 0.5rem; background: rgba(79,70,229,0.85); color: white; font-size: 0.75rem; padding: 0.2rem 0.5rem; border-radius: 999px; display: none; }
@@ -97,7 +136,10 @@ var galleryTmpl = template.Must(template.New("gallery").Parse(`<!DOCTYPE html>
       <button class="rescore-btn" onclick="event.stopPropagation(); triggerRescore(this, {{.ID}})">✨ Rescore</button>
     </div>
     <div class="info">
-      <span class="score">{{.WokeScore}}</span>
+      <div class="score-row">
+        <span class="score">{{.WokeScore}}</span>
+        <span class="level" title="{{scoreVibe .WokeScore}}">{{scoreLabel .WokeScore}}</span>
+      </div>
       <p class="desc">{{.Description}}</p>
       <p class="time">{{.CreatedAt}}</p>
     </div>
@@ -111,12 +153,29 @@ var galleryTmpl = template.Must(template.New("gallery").Parse(`<!DOCTYPE html>
   let latestId = {{if .}}{{(index . 0).ID}}{{else}}0{{end}};
   let currentSort = 'newest';
 
+  const LEVELS = [
+    { label: 'NOT A CRYSTAL', vibe: 'Not a crystal or person at all' },
+    { label: 'LEVEL 3 WOOK',  vibe: 'Raw, earthy, chaotic, festival energy' },
+    { label: 'LEVEL 2 WOOK',  vibe: 'Warm, cloudy, irregular, rough' },
+    { label: 'LEVEL 1 WOOK',  vibe: 'Leaning wook' },
+    { label: 'NORMIE',        vibe: 'Dead center, neither wook nor woke' },
+    { label: 'LEVEL 1 WOKE',  vibe: 'Leaning woke' },
+    { label: 'LEVEL 2 WOKE',  vibe: 'Cool, clear, geometric, polished' },
+    { label: 'LEVEL 3 WOKE',  vibe: 'Polished, geometric, precise, museum-ready' },
+  ];
+
+  function levelTag(score) {
+    const s = parseInt(score);
+    if (s < 0 || s > 7) return '<span class="level" title="Score outside the 0–7 range">OFF THE CHARTS</span>';
+    return '<span class="level" title="' + LEVELS[s].vibe + '">' + LEVELS[s].label + '</span>';
+  }
+
   function makeCard(e) {
     return '<div class="card" data-id="' + e.ID + '" data-score="' + e.WokeScore + '" data-time="' + e.CreatedAt + '" data-photo="' + e.PhotoPath + '" data-desc="' + e.Description + '" onclick="openModal(this)">' +
       '<span class="rescore-badge" id="badge-' + e.ID + '">✨ re-analyzed</span>' +
       '<img src="/photos/' + e.PhotoPath + '" alt="entry ' + e.ID + '" loading="lazy">' +
       '<div class="card-hover"><button class="rescore-btn" onclick="event.stopPropagation(); triggerRescore(this, ' + e.ID + ')">✨ Rescore</button></div>' +
-      '<div class="info"><span class="score">' + e.WokeScore + '</span><p class="desc">' + e.Description + '</p><p class="time">' + e.CreatedAt + '</p></div>' +
+      '<div class="info"><div class="score-row"><span class="score">' + e.WokeScore + '</span>' + levelTag(e.WokeScore) + '</div><p class="desc">' + e.Description + '</p><p class="time">' + e.CreatedAt + '</p></div>' +
       '</div>';
   }
 
@@ -200,7 +259,7 @@ var galleryTmpl = template.Must(template.New("gallery").Parse(`<!DOCTYPE html>
     document.getElementById('modal-body').innerHTML =
       '<div class="modal-orig">' +
         '<img src="/photos/' + photo + '" alt="">' +
-        '<div><div class="score">' + score + '</div><p style="margin-top:0.3rem">' + desc + '</p><p style="font-size:0.8rem;color:#666;margin-top:0.3rem">' + time + '</p></div>' +
+        '<div><div class="score-row"><div class="score">' + score + '</div>' + levelTag(score) + '</div><p style="margin-top:0.3rem">' + desc + '</p><p style="font-size:0.8rem;color:#666;margin-top:0.3rem">' + time + '</p></div>' +
       '</div>' +
       '<div class="modal-rescores"><h3>Re-analyses</h3><div id="rs-list"><p style="color:#666;font-size:0.9rem">Loading...</p></div></div>';
 
@@ -219,7 +278,7 @@ var galleryTmpl = template.Must(template.New("gallery").Parse(`<!DOCTYPE html>
       list.innerHTML = rescores.map(rs =>
         '<div class="rs-card">' +
           '<img src="/photos/' + photo + '" alt="">' +
-          '<div><span class="rs-badge">✨ re-analyzed</span><div class="rs-score">' + rs.WokeScore + '</div><div class="rs-subject">' + rs.Subject + '</div><p class="rs-desc">' + rs.Description + '</p></div>' +
+          '<div><span class="rs-badge">✨ re-analyzed</span><div class="score-row"><div class="rs-score">' + rs.WokeScore + '</div>' + levelTag(rs.WokeScore) + '</div><div class="rs-subject">' + rs.Subject + '</div><p class="rs-desc">' + rs.Description + '</p></div>' +
         '</div>'
       ).join('');
     } catch (_) {
