@@ -15,13 +15,23 @@ type GalleryData struct {
 	IsAdmin bool
 }
 
+const entriesWithVotesSQL = `
+SELECT e.id, e.woke_score, e.description, e.photo_path, e.created_at,
+       COALESCE(AVG(v.score), 0.0), COALESCE(COUNT(v.id), 0),
+       COALESCE(MAX(CASE WHEN v.voter_id = ? THEN v.score ELSE 0 END), 0)
+FROM entries e
+LEFT JOIN votes v ON v.entry_id = e.id
+GROUP BY e.id
+ORDER BY e.created_at DESC`
+
 func (s *Server) handleGallery(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path != "/" {
 		http.NotFound(w, r)
 		return
 	}
 
-	rows, err := s.db.Query("SELECT id, woke_score, description, photo_path, created_at FROM entries ORDER BY created_at DESC")
+	vid := getVoterID(r)
+	rows, err := s.db.Query(entriesWithVotesSQL, vid)
 	if err != nil {
 		log.Printf("gallery: db query failed: %v", err)
 		http.Error(w, "internal error", http.StatusInternalServerError)
@@ -32,7 +42,7 @@ func (s *Server) handleGallery(w http.ResponseWriter, r *http.Request) {
 	var entries []Entry
 	for rows.Next() {
 		var e Entry
-		rows.Scan(&e.ID, &e.WokeScore, &e.Description, &e.PhotoPath, &e.CreatedAt)
+		rows.Scan(&e.ID, &e.WokeScore, &e.Description, &e.PhotoPath, &e.CreatedAt, &e.VoteAvg, &e.VoteCount, &e.UserVote)
 		entries = append(entries, e)
 	}
 
@@ -52,9 +62,17 @@ func (s *Server) handlePhoto(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleLive(w http.ResponseWriter, r *http.Request) {
+	vid := getVoterID(r)
 	var e Entry
-	err := s.db.QueryRow("SELECT id, woke_score, description, photo_path, created_at FROM entries ORDER BY created_at DESC LIMIT 1").
-		Scan(&e.ID, &e.WokeScore, &e.Description, &e.PhotoPath, &e.CreatedAt)
+	err := s.db.QueryRow(`
+		SELECT e.id, e.woke_score, e.description, e.photo_path, e.created_at,
+		       COALESCE(AVG(v.score), 0.0), COALESCE(COUNT(v.id), 0),
+		       COALESCE(MAX(CASE WHEN v.voter_id = ? THEN v.score ELSE 0 END), 0)
+		FROM entries e
+		LEFT JOIN votes v ON v.entry_id = e.id
+		GROUP BY e.id
+		ORDER BY e.created_at DESC LIMIT 1`, vid).
+		Scan(&e.ID, &e.WokeScore, &e.Description, &e.PhotoPath, &e.CreatedAt, &e.VoteAvg, &e.VoteCount, &e.UserVote)
 	if err != nil {
 		liveTmpl.Execute(w, nil)
 		return
@@ -117,7 +135,8 @@ func (s *Server) handlePromoteRescore(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleAPIEntries(w http.ResponseWriter, r *http.Request) {
-	rows, err := s.db.Query("SELECT id, woke_score, description, photo_path, created_at FROM entries ORDER BY created_at DESC")
+	vid := getVoterID(r)
+	rows, err := s.db.Query(entriesWithVotesSQL, vid)
 	if err != nil {
 		log.Printf("api/entries: db query failed: %v", err)
 		http.Error(w, "internal error", http.StatusInternalServerError)
@@ -128,7 +147,7 @@ func (s *Server) handleAPIEntries(w http.ResponseWriter, r *http.Request) {
 	var entries []Entry
 	for rows.Next() {
 		var e Entry
-		rows.Scan(&e.ID, &e.WokeScore, &e.Description, &e.PhotoPath, &e.CreatedAt)
+		rows.Scan(&e.ID, &e.WokeScore, &e.Description, &e.PhotoPath, &e.CreatedAt, &e.VoteAvg, &e.VoteCount, &e.UserVote)
 		entries = append(entries, e)
 	}
 

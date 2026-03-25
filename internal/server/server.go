@@ -14,6 +14,9 @@ type Entry struct {
 	Description string
 	PhotoPath   string
 	CreatedAt   string
+	VoteAvg     float64
+	VoteCount   int
+	UserVote    int // 0 = not voted
 }
 
 type Config struct {
@@ -62,4 +65,5 @@ func (s *Server) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /api/entries/{id}/rescores", s.requireAuth(s.handleGetRescores))
 	mux.HandleFunc("DELETE /api/entries/{id}", s.requireAdmin(s.handleDelete))
 	mux.HandleFunc("PUT /api/entries/{id}", s.requireAdmin(s.handlePromoteRescore))
+	mux.HandleFunc("POST /api/entries/{id}/vote", s.requireAuth(s.handleVote))
 }

@@ -48,6 +48,14 @@ func main() {
 			subject TEXT NOT NULL,
 			description TEXT NOT NULL,
 			created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+		);
+		CREATE TABLE IF NOT EXISTS votes (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			entry_id INTEGER NOT NULL REFERENCES entries(id),
+			voter_id TEXT NOT NULL,
+			score INTEGER NOT NULL,
+			created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+			UNIQUE(entry_id, voter_id)
 		)
 	`); err != nil {
 		log.Fatalf("failed to create tables: %v", err)

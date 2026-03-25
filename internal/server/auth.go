@@ -49,6 +49,8 @@ func (s *Server) handleLogin(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) requireAuth(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		vid := ensureVoterIDCookie(w, r)
+
 		// If no view password is set, allow public access but still honour admin sessions.
 		if s.cfg.ViewPassword == "" {
 			role := "viewer"
@@ -61,6 +63,7 @@ func (s *Server) requireAuth(next http.HandlerFunc) http.HandlerFunc {
 				}
 			}
 			ctx := context.WithValue(r.Context(), roleKey, role)
+			ctx = context.WithValue(ctx, voterIDKey, vid)
 			next(w, r.WithContext(ctx))
 			return
 		}
@@ -81,6 +84,7 @@ func (s *Server) requireAuth(next http.HandlerFunc) http.HandlerFunc {
 		}
 
 		ctx := context.WithValue(r.Context(), roleKey, sd.role)
+		ctx = context.WithValue(ctx, voterIDKey, vid)
 		next(w, r.WithContext(ctx))
 	}
 }

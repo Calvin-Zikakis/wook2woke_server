@@ -1,6 +1,9 @@
 package server
 
-import "html/template"
+import (
+	"html/template"
+	"strconv"
+)
 
 var scoreLabels = []string{
 	"ESCAPED CLASSIFICATION",
@@ -44,6 +47,19 @@ var tmplFuncs = template.FuncMap{
 			return -1
 		}
 		return (s - 1) * 100 / 6
+	},
+	// votePos maps a float avg (1.0–7.0) to 0–100%
+	"votePos": func(avg float64) int {
+		if avg <= 1 {
+			return 0
+		}
+		if avg >= 7 {
+			return 100
+		}
+		return int(((avg - 1) / 6) * 100)
+	},
+	"printf1f": func(f float64) string {
+		return strconv.FormatFloat(f, 'f', 1, 64)
 	},
 }
 
@@ -110,7 +126,14 @@ var liveTmpl = template.Must(template.New("live").Funcs(tmplFuncs).Parse(`<!DOCT
   .spectrum-labels { display: flex; justify-content: space-between; font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; }
   .spectrum-labels .lbl-wook { color: #f97316; }
   .spectrum-labels .lbl-woke { color: #818cf8; }
-  .spectrum-track { position: relative; height: 6px; border-radius: 3px; background: linear-gradient(90deg, #f97316, #fbbf24, #6b7280, #60a5fa, #818cf8); }
+  .spectrum-track { position: relative; height: 6px; border-radius: 3px; background: linear-gradient(90deg, #f97316, #fbbf24, #6b7280, #60a5fa, #818cf8); overflow: visible; }
+  #live-vote .vote-label { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; color: #ccc; margin-bottom: 0.3rem; display: flex; justify-content: space-between; align-items: baseline; }
+  #live-vote #live-vstats { font-size: 0.75rem; color: #888; font-weight: 400; letter-spacing: 0; text-transform: none; }
+  #live-vote .vote-slider { position: absolute; width: 100%; left: 0; top: 50%; transform: translateY(-50%); height: 6px; background: transparent; margin: 0; padding: 0; -webkit-appearance: none; appearance: none; cursor: pointer; z-index: 1; }
+  #live-vote .vote-slider::-webkit-slider-runnable-track { background: transparent; height: 6px; }
+  #live-vote .vote-slider::-moz-range-track { background: transparent; height: 6px; }
+  #live-vote .vote-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 14px; height: 14px; border-radius: 50%; background: white; cursor: pointer; border: 2px solid #0d0d0d; box-shadow: 0 0 8px rgba(255,255,255,0.6); }
+  #live-vote .vote-slider::-moz-range-thumb { width: 14px; height: 14px; border-radius: 50%; background: white; cursor: pointer; border: 2px solid #0d0d0d; }
   #spectrum-dot { position: absolute; top: 50%; width: 14px; height: 14px; border-radius: 50%; background: white; border: 2px solid #0d0d0d; transform: translate(-50%, -50%); transition: left 0.8s cubic-bezier(.34,1.56,.64,1); box-shadow: 0 0 8px rgba(255,255,255,0.6); }
   #spectrum-unknown { position: absolute; top: 50%; transform: translateY(-50%) translateX(-50%); display: none; align-items: center; justify-content: center; animation: scan 5s ease-in-out infinite; }
   #spectrum-unknown span { font-size: 4rem; font-weight: 700; color: white; display: block; animation: wobble 4s ease-in-out infinite; }
@@ -152,11 +175,27 @@ var liveTmpl = template.Must(template.New("live").Funcs(tmplFuncs).Parse(`<!DOCT
       <p id="live-roast-label" style="font-size:0.75rem;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;margin-bottom:0.4rem"></p>
       <p id="live-roast-text" style="font-size:1rem;line-height:1.5;color:#888;max-width:480px;font-style:italic"></p>
     </div>
-    <div class="spectrum-wrap">
-      <div class="spectrum-labels"><span class="lbl-wook">wook</span><span class="lbl-woke">woke</span></div>
-      <div class="spectrum-track">
-        <div id="spectrum-dot"{{if gt (scorePos .WokeScore) -1}} style="left:{{scorePos .WokeScore}}%"{{else}} style="display:none"{{end}}></div>
-        <div id="spectrum-unknown"{{if eq (scorePos .WokeScore) -1}} style="display:flex"{{end}}><span>?</span></div>
+    <div>
+      <div style="font-size:0.75rem;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:#ccc;margin-bottom:0.3rem">WOOK↔WOKE Automatic Analysis ™</div>
+      <div class="spectrum-wrap">
+        <div class="spectrum-labels"><span class="lbl-wook">wook</span><span class="lbl-woke">woke</span></div>
+        <div class="spectrum-track">
+          <div id="spectrum-dot"{{if gt (scorePos .WokeScore) -1}} style="left:{{scorePos .WokeScore}}%"{{else}} style="display:none"{{end}}></div>
+          <div id="spectrum-unknown"{{if eq (scorePos .WokeScore) -1}} style="display:flex"{{end}}><span>?</span></div>
+        </div>
+      </div>
+    </div>
+    <div id="live-vote">
+      <div class="vote-label" style="color:#ccc;font-size:0.75rem">USER VOTES <span id="live-vstats">{{if gt .VoteCount 0}}Avg: {{printf1f .VoteAvg}} ({{.VoteCount}} {{if eq .VoteCount 1}}vote{{else}}votes{{end}}){{if gt .UserVote 0}} · Yours: {{.UserVote}}{{end}}{{else}}Be the first to vote!{{end}}</span></div>
+      <div class="spectrum-wrap">
+        <div class="spectrum-labels"><span class="lbl-wook">wook</span><span class="lbl-woke">woke</span></div>
+        <div class="spectrum-track">
+          <input type="range" min="1" max="7" step="1" class="vote-slider" id="live-vslider"
+                 value="{{if gt .UserVote 0}}{{.UserVote}}{{else}}4{{end}}"
+                 {{if eq .UserVote 0}}style="opacity:0.5"{{end}}
+                 onchange="submitLiveVote(this)">
+          <div class="vote-avg-marker" id="live-vmarker" style="{{if gt .VoteCount 0}}left:{{votePos .VoteAvg}}%{{else}}display:none{{end}}"></div>
+        </div>
       </div>
     </div>
   </div>
@@ -177,6 +216,42 @@ var liveTmpl = template.Must(template.New("live").Funcs(tmplFuncs).Parse(`<!DOCT
   let currentId        = {{if .ID}}{{.ID}}{{else}}0{{end}};
   let currentPhoto     = {{if .PhotoPath}}'{{.PhotoPath}}'{{else}}''{{end}};
   let currentRescoreId = 0;
+
+  function updateLiveVoteUI(avg, count, userVote) {
+    const stats  = document.getElementById('live-vstats');
+    const marker = document.getElementById('live-vmarker');
+    const slider = document.getElementById('live-vslider');
+    if (stats) {
+      let txt = count > 0
+        ? 'Avg: ' + avg.toFixed(1) + ' (' + count + (count === 1 ? ' vote' : ' votes') + ')'
+        : 'Be the first to vote!';
+      if (userVote > 0) txt += ' · Yours: ' + userVote;
+      stats.textContent = txt;
+    }
+    if (marker) {
+      if (count > 0) { marker.style.left = ((avg - 1) / 6 * 100).toFixed(1) + '%'; marker.style.display = ''; }
+      else marker.style.display = 'none';
+    }
+    if (slider) {
+      if (userVote > 0) { slider.value = userVote; slider.style.opacity = '1'; }
+      else { slider.value = 4; slider.style.opacity = '0.4'; }
+    }
+  }
+
+  async function submitLiveVote(slider) {
+    if (!currentId) return;
+    const score = parseInt(slider.value);
+    try {
+      const res = await fetch('/api/entries/' + currentId + '/vote', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ score }),
+      });
+      if (!res.ok) return;
+      const data = await res.json();
+      updateLiveVoteUI(data.avg, data.count, data.userVote);
+    } catch (_) {}
+  }
 
   const LEVELS = ['ESCAPED CLASSIFICATION','LEVEL 3 WOOK','LEVEL 2 WOOK','LEVEL 1 WOOK','NORMIE','LEVEL 1 WOKE','LEVEL 2 WOKE','LEVEL 3 WOKE'];
 
@@ -233,6 +308,9 @@ var liveTmpl = template.Must(template.New("live").Funcs(tmplFuncs).Parse(`<!DOCT
         await runAnalysis({ ...entries[0] });
         return; // skip rescore check this tick
       }
+
+      // Update live vote stats from poll
+      updateLiveVoteUI(entries[0].VoteAvg || 0, entries[0].VoteCount || 0, entries[0].UserVote || 0);
 
       // Check for new rescore on current entry — update in place, no animation
       if (currentId === 0) return;
@@ -297,13 +375,29 @@ var liveTmpl = template.Must(template.New("live").Funcs(tmplFuncs).Parse(`<!DOCT
         '<div id="photo-side"><img id="live-photo" src="" alt=""></div>' +
         '<div id="info-side">' +
           '<div id="live-score"></div><div id="live-level"></div><p id="live-desc"></p>' +
-          '<div class="spectrum-wrap">' +
-            '<div class="spectrum-labels"><span class="lbl-wook">wook</span><span class="lbl-woke">woke</span></div>' +
-            '<div class="spectrum-track"><div id="spectrum-dot"></div><div id="spectrum-unknown" style="display:none"><span>?</span></div></div>' +
+          '<div id="live-roast" style="display:none"><p id="live-roast-label"></p><p id="live-roast-text"></p></div>' +
+          '<div>' +
+            '<div style="font-size:0.75rem;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:#ccc;margin-bottom:0.3rem">WOOK↔WOKE Automatic Analysis ™</div>' +
+            '<div class="spectrum-wrap">' +
+              '<div class="spectrum-labels"><span class="lbl-wook">wook</span><span class="lbl-woke">woke</span></div>' +
+              '<div class="spectrum-track"><div id="spectrum-dot"></div><div id="spectrum-unknown" style="display:none"><span>?</span></div></div>' +
+            '</div>' +
+          '</div>' +
+          '<div id="live-vote">' +
+            '<div class="vote-label" style="color:#ccc;font-size:0.75rem">USER VOTES <span id="live-vstats">Be the first to vote!</span></div>' +
+            '<div class="spectrum-wrap">' +
+              '<div class="spectrum-labels"><span class="lbl-wook">wook</span><span class="lbl-woke">woke</span></div>' +
+              '<div class="spectrum-track">' +
+                '<input type="range" min="1" max="7" step="1" class="vote-slider" id="live-vslider" value="4" style="opacity:0.5" onchange="submitLiveVote(this)">' +
+                '<div class="vote-avg-marker" id="live-vmarker" style="display:none"></div>' +
+              '</div>' +
+            '</div>' +
           '</div>' +
         '</div>';
       document.body.appendChild(display);
     }
+    // Reset vote section for new entry
+    updateLiveVoteUI(entry.VoteAvg || 0, entry.VoteCount || 0, entry.UserVote || 0);
 
     document.getElementById('live-photo').src        = '/photos/' + entry.PhotoPath;
     const scoreEl = document.getElementById('live-score');
@@ -395,6 +489,19 @@ var galleryTmpl = template.Must(template.New("gallery").Funcs(tmplFuncs).Parse(`
   .level[data-score="7"] { color: #c4b5fd; border-color: #6d28d9; background: #1e0a40; }
   .card .desc { margin-top: 0.5rem; line-height: 1.4; }
   .card .time { margin-top: 0.5rem; font-size: 0.8rem; color: #666; }
+  /* Vote slider */
+  .vote-section { padding: 0 1rem 0.85rem; border-top: 1px solid #222; margin-top: 0.75rem; padding-top: 0.6rem; }
+  .vote-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 0.3rem; }
+  .vote-title { font-size: 0.6rem; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; color: #555; }
+  .vote-stats { font-size: 0.7rem; color: #666; }
+  .vote-bar-wrap { position: relative; }
+  .vote-slider { -webkit-appearance: none; appearance: none; width: 100%; height: 4px; border-radius: 2px; background: linear-gradient(90deg, #f97316, #fbbf24, #6b7280, #60a5fa, #818cf8); outline: none; cursor: pointer; display: block; transition: opacity 0.2s; margin: 7px 0; }
+  .vote-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 14px; height: 14px; border-radius: 50%; background: white; cursor: pointer; border: 2px solid #333; box-shadow: 0 0 5px rgba(255,255,255,0.4); }
+  .vote-slider::-moz-range-thumb { width: 14px; height: 14px; border-radius: 50%; background: white; cursor: pointer; border: 2px solid #333; }
+  .vote-avg-marker { position: absolute; top: 50%; transform: translate(-50%, -50%); width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,0.35); border: 1.5px solid rgba(255,255,255,0.7); pointer-events: none; transition: left 0.4s; }
+  .vote-wook-woke { display: flex; justify-content: space-between; font-size: 0.6rem; letter-spacing: 0.1em; text-transform: uppercase; margin-top: 0.15rem; }
+  .vote-wook-woke .lw { color: #f97316; }
+  .vote-wook-woke .lk { color: #818cf8; }
   .card .rescore-badge { position: absolute; top: 0.5rem; left: 0.5rem; background: rgba(79,70,229,0.85); color: white; font-size: 0.75rem; padding: 0.2rem 0.5rem; border-radius: 999px; display: none; }
   .card.has-rescores .rescore-badge { display: block; }
   .card-hover { position: absolute; inset: 0; background: rgba(0,0,0,0.55); display: flex; align-items: flex-start; justify-content: space-between; padding: 0.5rem; opacity: 0; transition: opacity 0.15s; pointer-events: none; }
@@ -446,8 +553,8 @@ var galleryTmpl = template.Must(template.New("gallery").Funcs(tmplFuncs).Parse(`
 <div class="controls">
   <button onclick="setSort('newest')" id="btn-newest" class="active">Most Recent</button>
   <button onclick="setSort('oldest')" id="btn-oldest">First Victims</button>
-  <button onclick="setSort('mostwook')" id="btn-mostwook">Most Wook</button>
-  <button onclick="setSort('mostwoke')" id="btn-mostwoke">Most Woke</button>
+  <button onclick="setSort('mostwook')" id="btn-mostwook">Smelliest</button>
+  <button onclick="setSort('mostwoke')" id="btn-mostwoke">Most Judgmental</button>
   <button onclick="setSort('normies')" id="btn-normies">Normies</button>
   <button onclick="setSort('unknown')" id="btn-unknown">Escaped Classification</button>
 </div>
@@ -485,6 +592,20 @@ var galleryTmpl = template.Must(template.New("gallery").Funcs(tmplFuncs).Parse(`
       </div>
       <p class="desc">{{.Description}}</p>
       <p class="time">{{.CreatedAt}}</p>
+    </div>
+    <div class="vote-section" onclick="event.stopPropagation()">
+      <div class="vote-header">
+        <span class="vote-title">USER VOTES</span>
+        <span class="vote-stats" id="vstats-{{.ID}}">{{if gt .VoteCount 0}}Avg: {{printf1f .VoteAvg}} ({{.VoteCount}} {{if eq .VoteCount 1}}vote{{else}}votes{{end}}){{if gt .UserVote 0}} · Yours: {{.UserVote}}{{end}}{{else}}Be the first to vote!{{end}}</span>
+      </div>
+      <div class="vote-bar-wrap">
+        <input type="range" min="1" max="7" step="1" class="vote-slider" id="vslider-{{.ID}}"
+               value="{{if gt .UserVote 0}}{{.UserVote}}{{else}}4{{end}}"
+               {{if eq .UserVote 0}}style="opacity:0.4"{{end}}
+               onchange="submitVote(this,{{.ID}})">
+        <div class="vote-avg-marker" id="vmarker-{{.ID}}" style="{{if gt .VoteCount 0}}left:{{votePos .VoteAvg}}%{{else}}display:none{{end}}"></div>
+      </div>
+      <div class="vote-wook-woke"><span class="lw">wook</span><span class="lk">woke</span></div>
     </div>
   </div>
   {{end}}
@@ -525,6 +646,30 @@ var galleryTmpl = template.Must(template.New("gallery").Funcs(tmplFuncs).Parse(`
     return '<span class="score" data-score="' + score + '">' + score + '</span>';
   }
 
+  function makeVoteSection(e) {
+    const hasVote  = e.UserVote > 0;
+    const hasVotes = e.VoteCount > 0;
+    let stats = hasVotes
+      ? 'Avg: ' + e.VoteAvg.toFixed(1) + ' (' + e.VoteCount + (e.VoteCount === 1 ? ' vote' : ' votes') + ')'
+      : 'Be the first to vote!';
+    if (hasVote) stats += ' · Yours: ' + e.UserVote;
+    const pct = hasVotes ? ((e.VoteAvg - 1) / 6 * 100).toFixed(1) : 0;
+    return '<div class="vote-section" onclick="event.stopPropagation()">' +
+      '<div class="vote-header">' +
+        '<span class="vote-title">USER VOTES</span>' +
+        '<span class="vote-stats" id="vstats-' + e.ID + '">' + stats + '</span>' +
+      '</div>' +
+      '<div class="vote-bar-wrap">' +
+        '<input type="range" min="1" max="7" step="1" class="vote-slider" id="vslider-' + e.ID + '" ' +
+          'value="' + (hasVote ? e.UserVote : 4) + '" ' +
+          'style="' + (hasVote ? '' : 'opacity:0.4') + '" ' +
+          'onchange="submitVote(this,' + e.ID + ')">' +
+        '<div class="vote-avg-marker" id="vmarker-' + e.ID + '" style="' + (hasVotes ? 'left:' + pct + '%' : 'display:none') + '"></div>' +
+      '</div>' +
+      '<div class="vote-wook-woke"><span class="lw">wook</span><span class="lk">woke</span></div>' +
+    '</div>';
+  }
+
   function makeCard(e) {
     const hoverContent = isAdmin
       ? '<button class="rescore-btn" onclick="event.stopPropagation(); triggerRescore(this,' + e.ID + ')">✨ Rescore</button>' +
@@ -535,6 +680,7 @@ var galleryTmpl = template.Must(template.New("gallery").Funcs(tmplFuncs).Parse(`
       '<img src="/photos/' + e.PhotoPath + '" alt="entry ' + e.ID + '" loading="lazy">' +
       '<div class="card-hover">' + hoverContent + '</div>' +
       '<div class="info"><div class="score-row">' + levelTag(e.WokeScore) + scoreTag(e.WokeScore) + '</div><p class="desc">' + e.Description + '</p><p class="time">' + e.CreatedAt + '</p></div>' +
+      makeVoteSection(e) +
       '</div>';
   }
 
@@ -583,12 +729,55 @@ var galleryTmpl = template.Must(template.New("gallery").Funcs(tmplFuncs).Parse(`
     cards.forEach(c => grid.appendChild(c));
   }
 
+  function updateVoteUI(entryId, avg, count, userVote) {
+    const stats  = document.getElementById('vstats-' + entryId);
+    const marker = document.getElementById('vmarker-' + entryId);
+    const slider = document.getElementById('vslider-' + entryId);
+    if (stats) {
+      let txt = count > 0
+        ? 'Avg: ' + avg.toFixed(1) + ' (' + count + (count === 1 ? ' vote' : ' votes') + ')'
+        : 'Be the first to vote!';
+      if (userVote > 0) txt += ' · Yours: ' + userVote;
+      stats.textContent = txt;
+    }
+    if (marker) {
+      if (count > 0) {
+        const pct = ((avg - 1) / 6 * 100).toFixed(1);
+        marker.style.left = pct + '%';
+        marker.style.display = '';
+      } else {
+        marker.style.display = 'none';
+      }
+    }
+    if (slider && userVote > 0) {
+      slider.value = userVote;
+      slider.style.opacity = '1';
+    }
+  }
+
+  async function submitVote(slider, entryId) {
+    const score = parseInt(slider.value);
+    try {
+      const res = await fetch('/api/entries/' + entryId + '/vote', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ score }),
+      });
+      if (!res.ok) return;
+      const data = await res.json();
+      updateVoteUI(entryId, data.avg, data.count, data.userVote);
+    } catch (_) {}
+  }
+
   async function poll() {
     try {
       const res = await fetch('/api/entries');
       if (!res.ok) return;
       const entries = await res.json();
       if (!entries || entries.length === 0) return;
+
+      // Update vote stats on all existing cards
+      entries.forEach(e => updateVoteUI(e.ID, e.VoteAvg, e.VoteCount, e.UserVote));
 
       const newEntries = entries.filter(e => e.ID > latestId);
       if (newEntries.length === 0) return;
