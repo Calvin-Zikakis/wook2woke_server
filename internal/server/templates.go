@@ -444,8 +444,8 @@ var galleryTmpl = template.Must(template.New("gallery").Funcs(tmplFuncs).Parse(`
   </div>
 </header>
 <div class="controls">
-  <button onclick="setSort('newest')" id="btn-newest" class="active">Newest</button>
-  <button onclick="setSort('oldest')" id="btn-oldest">Oldest</button>
+  <button onclick="setSort('newest')" id="btn-newest" class="active">Most Recent</button>
+  <button onclick="setSort('oldest')" id="btn-oldest">First Victims</button>
   <button onclick="setSort('mostwook')" id="btn-mostwook">Most Wook</button>
   <button onclick="setSort('mostwoke')" id="btn-mostwoke">Most Woke</button>
   <button onclick="setSort('normies')" id="btn-normies">Normies</button>
