@@ -129,11 +129,11 @@ var liveTmpl = template.Must(template.New("live").Funcs(tmplFuncs).Parse(`<!DOCT
   .spectrum-track { position: relative; height: 6px; border-radius: 3px; background: linear-gradient(90deg, #f97316, #fbbf24, #6b7280, #60a5fa, #818cf8); overflow: visible; }
   #live-vote .vote-label { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; color: #ccc; margin-bottom: 0.3rem; display: flex; justify-content: space-between; align-items: baseline; }
   #live-vote #live-vstats { font-size: 0.75rem; color: #888; font-weight: 400; letter-spacing: 0; text-transform: none; }
-  #live-vote .vote-slider { position: absolute; width: 100%; left: 0; top: 50%; transform: translateY(-50%); height: 6px; background: transparent; margin: 0; padding: 0; -webkit-appearance: none; appearance: none; cursor: pointer; z-index: 1; }
+  #live-vote .vote-slider { position: absolute; width: 100%; left: 0; top: 50%; transform: translateY(-50%); height: 64px; background: transparent; margin: 0; padding: 0; -webkit-appearance: none; appearance: none; cursor: pointer; z-index: 1; }
   #live-vote .vote-slider::-webkit-slider-runnable-track { background: transparent; height: 6px; }
   #live-vote .vote-slider::-moz-range-track { background: transparent; height: 6px; }
-  #live-vote .vote-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 14px; height: 14px; border-radius: 50%; background: white; cursor: pointer; border: 2px solid #0d0d0d; box-shadow: 0 0 8px rgba(255,255,255,0.6); }
-  #live-vote .vote-slider::-moz-range-thumb { width: 14px; height: 14px; border-radius: 50%; background: white; cursor: pointer; border: 2px solid #0d0d0d; }
+  #live-vote .vote-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 28px; height: 28px; border-radius: 50%; background: white; cursor: pointer; border: 2px solid #0d0d0d; box-shadow: 0 0 8px rgba(255,255,255,0.6); margin-top: -11px; }
+  #live-vote .vote-slider::-moz-range-thumb { width: 28px; height: 28px; border-radius: 50%; background: white; cursor: pointer; border: 2px solid #0d0d0d; }
   #spectrum-dot { position: absolute; top: 50%; width: 14px; height: 14px; border-radius: 50%; background: white; border: 2px solid #0d0d0d; transform: translate(-50%, -50%); transition: left 0.8s cubic-bezier(.34,1.56,.64,1); box-shadow: 0 0 8px rgba(255,255,255,0.6); }
   #spectrum-unknown { position: absolute; top: 50%; transform: translateY(-50%) translateX(-50%); display: none; align-items: center; justify-content: center; animation: scan 5s ease-in-out infinite; }
   #spectrum-unknown span { font-size: 4rem; font-weight: 700; color: white; display: block; animation: wobble 4s ease-in-out infinite; }
@@ -496,11 +496,11 @@ var galleryTmpl = template.Must(template.New("gallery").Funcs(tmplFuncs).Parse(`
   .vote-title { font-size: 0.6rem; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; color: #555; }
   .vote-stats { font-size: 0.7rem; color: #666; }
   .vote-bar-wrap { position: relative; }
-  .vote-slider { -webkit-appearance: none; appearance: none; width: 100%; height: 44px; background: transparent; outline: none; cursor: pointer; display: block; transition: opacity 0.2s; margin: 0; }
-  .vote-slider::-webkit-slider-runnable-track { height: 4px; border-radius: 2px; background: linear-gradient(90deg, #f97316, #fbbf24, #6b7280, #60a5fa, #818cf8); }
-  .vote-slider::-moz-range-track { height: 4px; border-radius: 2px; background: linear-gradient(90deg, #f97316, #fbbf24, #6b7280, #60a5fa, #818cf8); }
-  .vote-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 20px; height: 20px; border-radius: 50%; background: white; cursor: pointer; border: 2px solid #333; box-shadow: 0 0 5px rgba(255,255,255,0.4); margin-top: -8px; }
-  .vote-slider::-moz-range-thumb { width: 20px; height: 20px; border-radius: 50%; background: white; cursor: pointer; border: 2px solid #333; }
+  .vote-slider { -webkit-appearance: none; appearance: none; width: 100%; height: 64px; background: transparent; outline: none; cursor: pointer; display: block; transition: opacity 0.2s; margin: 0; }
+  .vote-slider::-webkit-slider-runnable-track { height: 6px; border-radius: 3px; background: linear-gradient(90deg, #f97316, #fbbf24, #6b7280, #60a5fa, #818cf8); }
+  .vote-slider::-moz-range-track { height: 6px; border-radius: 3px; background: linear-gradient(90deg, #f97316, #fbbf24, #6b7280, #60a5fa, #818cf8); }
+  .vote-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 28px; height: 28px; border-radius: 50%; background: white; cursor: pointer; border: 2px solid #333; box-shadow: 0 0 8px rgba(255,255,255,0.5); margin-top: -11px; }
+  .vote-slider::-moz-range-thumb { width: 28px; height: 28px; border-radius: 50%; background: white; cursor: pointer; border: 2px solid #333; }
   .vote-avg-marker { position: absolute; top: 50%; transform: translate(-50%, -50%); width: 10px; height: 10px; border-radius: 50%; background: rgba(255,255,255,0.35); border: 1.5px solid rgba(255,255,255,0.7); pointer-events: none; transition: left 0.4s; }
   .vote-wook-woke { display: flex; justify-content: space-between; font-size: 0.6rem; letter-spacing: 0.1em; text-transform: uppercase; margin-top: 0.15rem; }
   .vote-wook-woke .lw { color: #f97316; }
@@ -908,5 +908,16 @@ var galleryTmpl = template.Must(template.New("gallery").Funcs(tmplFuncs).Parse(`
   }
 
   document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+  // On touch devices, open modal directly on tap without requiring a hover state first
+  if ('ontouchstart' in window) {
+    document.getElementById('grid')?.addEventListener('touchend', e => {
+      const clickable = e.target.closest('.card-clickable');
+      if (clickable) {
+        e.preventDefault();
+        openModal(clickable.closest('.card'));
+      }
+    }, { passive: false });
+  }
 </script>
 </body></html>`))
