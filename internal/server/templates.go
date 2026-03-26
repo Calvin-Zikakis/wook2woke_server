@@ -909,9 +909,19 @@ var galleryTmpl = template.Must(template.New("gallery").Funcs(tmplFuncs).Parse(`
 
   document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
 
-  // On touch devices, open modal directly on tap without requiring a hover state first
+  // On touch devices, open modal directly on tap without requiring a hover state first.
+  // Only fire if the finger didn't scroll (movement < 10px).
   if ('ontouchstart' in window) {
-    document.getElementById('grid')?.addEventListener('touchend', e => {
+    let touchStartX = 0, touchStartY = 0;
+    const grid = document.getElementById('grid');
+    grid?.addEventListener('touchstart', e => {
+      touchStartX = e.touches[0].clientX;
+      touchStartY = e.touches[0].clientY;
+    }, { passive: true });
+    grid?.addEventListener('touchend', e => {
+      const dx = Math.abs(e.changedTouches[0].clientX - touchStartX);
+      const dy = Math.abs(e.changedTouches[0].clientY - touchStartY);
+      if (dx > 10 || dy > 10) return; // was a scroll, not a tap
       const clickable = e.target.closest('.card-clickable');
       if (clickable) {
         e.preventDefault();
