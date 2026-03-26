@@ -463,6 +463,7 @@ var galleryTmpl = template.Must(template.New("gallery").Funcs(tmplFuncs).Parse(`
   .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1rem; max-width: 1200px; margin: 0 auto; }
   .card { background: #1a1a1a; border-radius: 12px; overflow: hidden; position: relative; }
   .card-clickable { cursor: pointer; position: relative; }
+  @media (hover: hover) { .card-clickable:hover { box-shadow: inset 0 0 0 2px #444; } }
   .card img { width: 100%; aspect-ratio: 4/3; object-fit: cover; display: block; }
   .card .info { padding: 1rem 1rem 1.1rem; }
   .card .score-row { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
