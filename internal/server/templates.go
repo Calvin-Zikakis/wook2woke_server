@@ -461,9 +461,10 @@ var galleryTmpl = template.Must(template.New("gallery").Funcs(tmplFuncs).Parse(`
   .controls button.active { background: #4f46e5; border-color: #4f46e5; }
   /* Grid */
   .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1rem; max-width: 1200px; margin: 0 auto; }
-  .card { background: #1a1a1a; border-radius: 12px; overflow: hidden; cursor: pointer; position: relative; }
+  .card { background: #1a1a1a; border-radius: 12px; overflow: hidden; position: relative; }
+  .card-clickable { cursor: pointer; position: relative; }
   .card img { width: 100%; aspect-ratio: 4/3; object-fit: cover; display: block; }
-  .card .info { padding: 1rem; }
+  .card .info { padding: 1rem 1rem 1.1rem; }
   .card .score-row { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
   .card .info .level { font-size: 0.85rem; padding: 0.35rem 0.75rem; }
   .card .info .score { font-size: 1.1rem; }
@@ -490,7 +491,7 @@ var galleryTmpl = template.Must(template.New("gallery").Funcs(tmplFuncs).Parse(`
   .card .desc { margin-top: 0.5rem; line-height: 1.4; }
   .card .time { margin-top: 0.5rem; font-size: 0.8rem; color: #666; }
   /* Vote slider */
-  .vote-section { padding: 0 1rem 0.85rem; border-top: 1px solid #222; margin-top: 0.75rem; padding-top: 0.6rem; }
+  .vote-section { padding: 0.6rem 1rem 0.85rem; border-top: 1px solid #222; }
   .vote-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 0.3rem; }
   .vote-title { font-size: 0.6rem; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; color: #555; }
   .vote-stats { font-size: 0.7rem; color: #666; }
@@ -506,7 +507,7 @@ var galleryTmpl = template.Must(template.New("gallery").Funcs(tmplFuncs).Parse(`
   .card.has-rescores .rescore-badge { display: block; }
   .card-hover { position: absolute; inset: 0; background: rgba(0,0,0,0.55); display: flex; align-items: flex-start; justify-content: space-between; padding: 0.5rem; opacity: 0; transition: opacity 0.15s; pointer-events: none; }
   .card-hover-right { display: flex; gap: 0.4rem; align-items: center; }
-  .card:hover .card-hover { opacity: 1; pointer-events: auto; }
+  .card-clickable:hover .card-hover { opacity: 1; pointer-events: auto; }
   .rescore-btn { padding: 0.4rem 0.8rem; background: #4f46e5; border: none; border-radius: 8px; color: white; font-size: 0.85rem; cursor: pointer; }
   .rescore-btn:hover { background: #4338ca; }
   .rescore-btn:disabled { background: #555; cursor: not-allowed; }
@@ -570,7 +571,8 @@ var galleryTmpl = template.Must(template.New("gallery").Funcs(tmplFuncs).Parse(`
 {{if .Entries}}
 <div class="grid" id="grid">
   {{range .Entries}}
-  <div class="card" data-id="{{.ID}}" data-score="{{.WokeScore}}" data-time="{{.CreatedAt}}" data-photo="{{.PhotoPath}}" data-desc="{{.Description}}" onclick="openModal(this)">
+  <div class="card" data-id="{{.ID}}" data-score="{{.WokeScore}}" data-time="{{.CreatedAt}}" data-photo="{{.PhotoPath}}" data-desc="{{.Description}}">
+    <div class="card-clickable" onclick="openModal(this.closest('.card'))">
     <span class="rescore-badge" id="badge-{{.ID}}">✨ re-analyzed</span>
     <img src="/photos/{{.PhotoPath}}" alt="entry {{.ID}}" loading="lazy">
     <div class="card-hover">
@@ -593,7 +595,8 @@ var galleryTmpl = template.Must(template.New("gallery").Funcs(tmplFuncs).Parse(`
       <p class="desc">{{.Description}}</p>
       <p class="time">{{.CreatedAt}}</p>
     </div>
-    <div class="vote-section" onclick="event.stopPropagation()">
+    </div>
+    <div class="vote-section">
       <div class="vote-header">
         <span class="vote-title">USER VOTES</span>
         <span class="vote-stats" id="vstats-{{.ID}}">{{if gt .VoteCount 0}}Avg: {{printf1f .VoteAvg}} ({{.VoteCount}} {{if eq .VoteCount 1}}vote{{else}}votes{{end}}){{if gt .UserVote 0}} · Yours: {{.UserVote}}{{end}}{{else}}Be the first to vote!{{end}}</span>
@@ -675,11 +678,13 @@ var galleryTmpl = template.Must(template.New("gallery").Funcs(tmplFuncs).Parse(`
       ? '<button class="rescore-btn" onclick="event.stopPropagation(); triggerRescore(this,' + e.ID + ')">✨ Rescore</button>' +
         '<div class="card-hover-right"><button class="delete-btn" onclick="event.stopPropagation(); deleteEntry(this,' + e.ID + ')">🗑</button><a class="download-btn" href="/photos/' + e.PhotoPath + '" download onclick="event.stopPropagation()">⬇ Save</a></div>'
       : '<div></div><a class="download-btn" href="/photos/' + e.PhotoPath + '" download onclick="event.stopPropagation()">⬇ Save</a>';
-    return '<div class="card" data-id="' + e.ID + '" data-score="' + e.WokeScore + '" data-time="' + e.CreatedAt + '" data-photo="' + e.PhotoPath + '" data-desc="' + e.Description + '" onclick="openModal(this)">' +
-      '<span class="rescore-badge" id="badge-' + e.ID + '">✨ re-analyzed</span>' +
-      '<img src="/photos/' + e.PhotoPath + '" alt="entry ' + e.ID + '" loading="lazy">' +
-      '<div class="card-hover">' + hoverContent + '</div>' +
-      '<div class="info"><div class="score-row">' + levelTag(e.WokeScore) + scoreTag(e.WokeScore) + '</div><p class="desc">' + e.Description + '</p><p class="time">' + e.CreatedAt + '</p></div>' +
+    return '<div class="card" data-id="' + e.ID + '" data-score="' + e.WokeScore + '" data-time="' + e.CreatedAt + '" data-photo="' + e.PhotoPath + '" data-desc="' + e.Description + '">' +
+      '<div class="card-clickable" onclick="openModal(this.closest(\'.card\'))">' +
+        '<span class="rescore-badge" id="badge-' + e.ID + '">✨ re-analyzed</span>' +
+        '<img src="/photos/' + e.PhotoPath + '" alt="entry ' + e.ID + '" loading="lazy">' +
+        '<div class="card-hover">' + hoverContent + '</div>' +
+        '<div class="info"><div class="score-row">' + levelTag(e.WokeScore) + scoreTag(e.WokeScore) + '</div><p class="desc">' + e.Description + '</p><p class="time">' + e.CreatedAt + '</p></div>' +
+      '</div>' +
       makeVoteSection(e) +
       '</div>';
   }
