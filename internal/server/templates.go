@@ -496,16 +496,18 @@ var galleryTmpl = template.Must(template.New("gallery").Funcs(tmplFuncs).Parse(`
   .vote-title { font-size: 0.6rem; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; color: #555; }
   .vote-stats { font-size: 0.7rem; color: #666; }
   .vote-bar-wrap { position: relative; }
-  .vote-slider { -webkit-appearance: none; appearance: none; width: 100%; height: 4px; border-radius: 2px; background: linear-gradient(90deg, #f97316, #fbbf24, #6b7280, #60a5fa, #818cf8); outline: none; cursor: pointer; display: block; transition: opacity 0.2s; margin: 7px 0; }
-  .vote-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 14px; height: 14px; border-radius: 50%; background: white; cursor: pointer; border: 2px solid #333; box-shadow: 0 0 5px rgba(255,255,255,0.4); }
-  .vote-slider::-moz-range-thumb { width: 14px; height: 14px; border-radius: 50%; background: white; cursor: pointer; border: 2px solid #333; }
-  .vote-avg-marker { position: absolute; top: 50%; transform: translate(-50%, -50%); width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,0.35); border: 1.5px solid rgba(255,255,255,0.7); pointer-events: none; transition: left 0.4s; }
+  .vote-slider { -webkit-appearance: none; appearance: none; width: 100%; height: 44px; background: transparent; outline: none; cursor: pointer; display: block; transition: opacity 0.2s; margin: 0; }
+  .vote-slider::-webkit-slider-runnable-track { height: 4px; border-radius: 2px; background: linear-gradient(90deg, #f97316, #fbbf24, #6b7280, #60a5fa, #818cf8); }
+  .vote-slider::-moz-range-track { height: 4px; border-radius: 2px; background: linear-gradient(90deg, #f97316, #fbbf24, #6b7280, #60a5fa, #818cf8); }
+  .vote-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 20px; height: 20px; border-radius: 50%; background: white; cursor: pointer; border: 2px solid #333; box-shadow: 0 0 5px rgba(255,255,255,0.4); margin-top: -8px; }
+  .vote-slider::-moz-range-thumb { width: 20px; height: 20px; border-radius: 50%; background: white; cursor: pointer; border: 2px solid #333; }
+  .vote-avg-marker { position: absolute; top: 50%; transform: translate(-50%, -50%); width: 10px; height: 10px; border-radius: 50%; background: rgba(255,255,255,0.35); border: 1.5px solid rgba(255,255,255,0.7); pointer-events: none; transition: left 0.4s; }
   .vote-wook-woke { display: flex; justify-content: space-between; font-size: 0.6rem; letter-spacing: 0.1em; text-transform: uppercase; margin-top: 0.15rem; }
   .vote-wook-woke .lw { color: #f97316; }
   .vote-wook-woke .lk { color: #818cf8; }
   .card .rescore-badge { position: absolute; top: 0.5rem; left: 0.5rem; background: rgba(79,70,229,0.85); color: white; font-size: 0.75rem; padding: 0.2rem 0.5rem; border-radius: 999px; display: none; }
   .card.has-rescores .rescore-badge { display: block; }
-  .card-hover { position: absolute; inset: 0; background: rgba(0,0,0,0.55); display: flex; align-items: flex-start; justify-content: space-between; padding: 0.5rem; opacity: 0; transition: opacity 0.15s; pointer-events: none; }
+  .card-hover { position: absolute; inset: 0; background: none; display: flex; align-items: flex-start; justify-content: space-between; padding: 0.5rem; opacity: 0; transition: opacity 0.15s; pointer-events: none; }
   .card-hover-right { display: flex; gap: 0.4rem; align-items: center; }
   .card-clickable:hover .card-hover { opacity: 1; pointer-events: auto; }
   .rescore-btn { padding: 0.4rem 0.8rem; background: #4f46e5; border: none; border-radius: 8px; color: white; font-size: 0.85rem; cursor: pointer; }
