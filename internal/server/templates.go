@@ -255,10 +255,7 @@ var liveTmpl = template.Must(template.New("live").Funcs(tmplFuncs).Parse(`<!DOCT
 
   const LEVELS = ['ESCAPED CLASSIFICATION','LEVEL 3 WOOK','LEVEL 2 WOOK','LEVEL 1 WOOK','NORMIE','LEVEL 1 WOKE','LEVEL 2 WOKE','LEVEL 3 WOKE'];
 
-  const WOKE_ROASTS = [
-    "You cancelled someone for a 2009 tweet, a Halloween costume from college, and vibes. The trial lasted four hours on a Discord server. You were judge, jury, and main character.",
-    "You cancelled your best friend of eleven years over a repost and felt nothing. You posted about the grief though. Fourteen people liked it. You screenshotted that too.",
-  ];
+  const WOKE_ROASTS = [];
 
   const WOOK_ROASTS = [
     "You've been \"on the verge of awakening\" for eight straight festival seasons. You own 11 crystals and zero accountability. Every bad decision was \"a lesson.\"",
@@ -561,7 +558,7 @@ var galleryTmpl = template.Must(template.New("gallery").Funcs(tmplFuncs).Parse(`
   <button onclick="setSort('newest')" id="btn-newest" class="active">Most Recent</button>
   <button onclick="setSort('oldest')" id="btn-oldest">First Victims</button>
   <button onclick="setSort('mostwook')" id="btn-mostwook">Smelliest</button>
-  <button onclick="setSort('mostwoke')" id="btn-mostwoke">Most Judgmental</button>
+  <button onclick="setSort('mostwoke')" id="btn-mostwoke">Peak Spirituality</button>
   <button onclick="setSort('normies')" id="btn-normies">Normies</button>
   <button onclick="setSort('unknown')" id="btn-unknown">Escaped Classification</button>
 </div>
