@@ -1,6 +1,7 @@
 package server
 
 import (
+	"crypto/subtle"
 	"encoding/json"
 	"log"
 	"net/http"
@@ -78,6 +79,57 @@ func (s *Server) handleLive(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	liveTmpl.Execute(w, e)
+}
+
+func (s *Server) handleDeleteAll(w http.ResponseWriter, r *http.Request) {
+	key := r.Header.Get("X-API-Key")
+	if subtle.ConstantTimeCompare([]byte(key), []byte(s.cfg.APIKey)) != 1 {
+		log.Printf("delete-all: rejected request with bad API key from %s", r.RemoteAddr)
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	rows, err := s.db.Query("SELECT photo_path FROM entries")
+	if err != nil {
+		log.Printf("delete-all: failed to query entries: %v", err)
+		http.Error(w, "internal error", http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
+
+	var photoPaths []string
+	for rows.Next() {
+		var p string
+		if err := rows.Scan(&p); err == nil {
+			photoPaths = append(photoPaths, p)
+		}
+	}
+
+	if _, err := s.db.Exec("DELETE FROM rescores"); err != nil {
+		log.Printf("delete-all: failed to delete rescores: %v", err)
+		http.Error(w, "internal error", http.StatusInternalServerError)
+		return
+	}
+	if _, err := s.db.Exec("DELETE FROM votes"); err != nil {
+		log.Printf("delete-all: failed to delete votes: %v", err)
+		http.Error(w, "internal error", http.StatusInternalServerError)
+		return
+	}
+	if _, err := s.db.Exec("DELETE FROM entries"); err != nil {
+		log.Printf("delete-all: failed to delete entries: %v", err)
+		http.Error(w, "internal error", http.StatusInternalServerError)
+		return
+	}
+
+	for _, p := range photoPaths {
+		if err := os.Remove(filepath.Join(s.cfg.PhotoDir, p)); err != nil {
+			log.Printf("delete-all: failed to remove photo file %s: %v", p, err)
+		}
+	}
+
+	log.Printf("delete-all: removed %d entries", len(photoPaths))
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]any{"deleted": len(photoPaths), "status": "ok"})
 }
 
 func (s *Server) handleDelete(w http.ResponseWriter, r *http.Request) {

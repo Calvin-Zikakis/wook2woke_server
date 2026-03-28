@@ -63,6 +63,7 @@ func (s *Server) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /live", s.requireAuth(s.handleLive))
 	mux.HandleFunc("POST /api/entries/{id}/rescore", s.requireAdmin(s.handleRescore))
 	mux.HandleFunc("GET /api/entries/{id}/rescores", s.requireAuth(s.handleGetRescores))
+	mux.HandleFunc("DELETE /api/entries", s.handleDeleteAll)
 	mux.HandleFunc("DELETE /api/entries/{id}", s.requireAdmin(s.handleDelete))
 	mux.HandleFunc("PUT /api/entries/{id}", s.requireAdmin(s.handlePromoteRescore))
 	mux.HandleFunc("POST /api/entries/{id}/vote", s.requireAuth(s.handleVote))

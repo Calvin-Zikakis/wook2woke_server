@@ -9,7 +9,7 @@ WOKE_SCORE  ?= 7
 DESCRIPTION ?= Test upload from Makefile
 HOST        ?= http://localhost:8080
 
-.PHONY: build run test clean docker-build docker-up docker-down upload
+.PHONY: build run test clean docker-build docker-up docker-down upload delete-all
 
 build:
 	CGO_ENABLED=1 go build -o $(BINARY) .
@@ -31,6 +31,10 @@ docker-up:
 
 docker-down:
 	docker compose down
+
+delete-all:
+	curl -X DELETE $(HOST)/api/entries \
+	  -H "X-API-Key: $(API_KEY)"
 
 upload:
 ifndef PHOTO
