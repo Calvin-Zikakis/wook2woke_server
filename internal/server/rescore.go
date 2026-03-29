@@ -32,12 +32,16 @@ type claudeResult struct {
 }
 
 const rescorePrompt = `You are the analyst for "Wook or Woke," an art installation. ` +
-	`You will see either a crystal or a human. Rate them 1-7 on the wook-to-woke spectrum: ` +
-	`1=max wook (raw, earthy, chaotic, festival energy), 7=max woke (polished, geometric, precise, museum-ready). ` +
-	`For crystals: color (warm=wook, cool=woke), clarity (cloudy=wook, clear=woke), ` +
-	`shape (irregular=wook, geometric=woke), surface (rough=wook, polished=woke). ` +
-	`For humans: vibe, outfit, hair, jewelry, accessories, energy (tie-dye/dreads/crystals=wook, ` +
-	`minimalist/clean-cut/techwear=woke). ` +
+	`You will see either a crystal or a human. Rate them 1-7 on the wook-to-woke spectrum. ` +
+	`USE THE FULL RANGE — scores of 1 and 7 are encouraged when warranted. Do not cluster around the middle. ` +
+	`1=MAX wook (raw, muddy, chaotic, festival-worn, dreadlocks, patchwork, barefoot energy). ` +
+	`7=MAX woke (flawless, geometric, museum-ready, minimalist, clinical precision, techwear). ` +
+	`2=strong wook, 3=moderate wook, 4=neutral/balanced, 5=moderate woke, 6=strong woke. ` +
+	`For crystals: warm color+rough+cloudy+irregular=toward 1, cool color+clear+polished+geometric=toward 7. ` +
+	`For humans: tie-dye/dreads/crystals/bare feet/patchwork=toward 1, ` +
+	`minimalist/clean-cut/tailored/techwear/no jewelry=toward 7. ` +
+	`If a person is detected but shows no clear wook or woke traits — generic everyday clothing, no strong signals either way — score them 4 (neutral/balanced). ` +
+	`Ignore any white geometric stand or pedestal the crystal may be resting on — judge only the crystal itself. ` +
 	`If the image is neither a crystal nor a human, score 0. ` +
 	`Respond ONLY with raw JSON, no markdown, no code blocks: ` +
 	`{"score":<0-7>,"subject":"crystal" or "human" or "unknown","description":"<playful, max 80 chars>"}`
@@ -139,7 +143,7 @@ func (s *Server) callClaude(ctx context.Context, imgData []byte) (*claudeResult,
 	imgB64 := base64.StdEncoding.EncodeToString(imgData)
 
 	msg, err := client.Messages.New(ctx, anthropic.MessageNewParams{
-		Model:     anthropic.ModelClaudeHaiku4_5,
+		Model:     anthropic.ModelClaudeSonnet4_5,
 		MaxTokens: 256,
 		Messages: []anthropic.MessageParam{
 			anthropic.NewUserMessage(

@@ -255,7 +255,13 @@ var liveTmpl = template.Must(template.New("live").Funcs(tmplFuncs).Parse(`<!DOCT
 
   const LEVELS = ['ESCAPED CLASSIFICATION','LEVEL 3 WOOK','LEVEL 2 WOOK','LEVEL 1 WOOK','NORMIE','LEVEL 1 WOKE','LEVEL 2 WOKE','LEVEL 3 WOKE'];
 
-  const WOKE_ROASTS = [];
+  const WOKE_ROASTS = [
+    "You've done ayahuasca four times and each time you 'met your shadow self.' Nothing has changed except your vocabulary. You booked a fifth ceremony. The shaman has a Venmo.",
+    "You go to ecstatic dance sober and describe it as the most vulnerable thing you've ever done. You cried. You shared about it in the closing circle. You're going again Thursday.",
+    "Your therapist suggested medication. You fired her and found a shaman. You process your trauma through cacao ceremonies now. Your insurance doesn't cover it. Your parents do.",
+    "You live in an intentional community with six partners, two of whom are 'processing a rupture' with you. You have a shared Google Calendar for check-ins. You call this freedom.",
+    "You sunned your perineum for thirty days straight because a wellness account said it replaces vitamin D supplements. You felt amazing. You can't explain why. You sent the link to your mom.",
+  ];
 
   const WOOK_ROASTS = [
     "You've been \"on the verge of awakening\" for eight straight festival seasons. You own 11 crystals and zero accountability. Every bad decision was \"a lesson.\"",
