@@ -105,20 +105,16 @@ var liveTmpl = template.Must(template.New("live").Funcs(tmplFuncs).Parse(`<!DOCT
   .blink { animation: blink 1s step-end infinite; }
   @keyframes blink { 50% { opacity: 0; } }
   /* ── Main display ── */
-  #display { flex: 1; display: grid; grid-template-columns: 2fr 1fr; height: 100vh; opacity: 0; transition: opacity 0.6s; }
+  #display { flex: 1; display: grid; grid-template-columns: none; grid-template-rows: 2fr 1fr; height: 100vh; opacity: 0; transition: opacity 0.6s; }
   #display.visible { opacity: 1; }
   #photo-side { position: relative; overflow: hidden; background: #111; display: flex; align-items: center; justify-content: center; }
   #photo-side img { width: 100%; height: 100%; object-fit: cover; display: block; }
-  #info-side { display: flex; flex-direction: column; justify-content: center; padding: 4rem 3rem; gap: 1.5rem; background: #0d0d0d; }
-  @media (max-width: 640px) {
-    #display { grid-template-columns: none; grid-template-rows: 2fr 1fr; }
-    #info-side { padding: 1.2rem 1.4rem; gap: 0.75rem; }
-    #live-level { font-size: 1.4rem; padding: 0.35rem 0.8rem; }
-    #live-desc { font-size: 0.95rem; max-width: 100%; }
-    #live-roast-label { font-size: 0.75rem; }
-    #live-roast-text { font-size: 0.85rem; }
-    .spectrum-wrap { gap: 0.2rem; }
-  }
+  #info-side { display: flex; flex-direction: column; justify-content: center; padding: 1.2rem 1.4rem; gap: 0.75rem; background: #0d0d0d; }
+  #live-level { font-size: 1.4rem; padding: 0.35rem 0.8rem; }
+  #live-desc { font-size: 0.95rem; max-width: 100%; }
+  #live-roast-label { font-size: 0.75rem; }
+  #live-roast-text { font-size: 0.85rem; }
+  .spectrum-wrap { gap: 0.2rem; }
   #live-score { display: none; }
   #live-level { font-size: 2.8rem; font-weight: 900; letter-spacing: 0.06em; text-transform: uppercase; border: 1px solid; border-radius: 10px; padding: 0.5rem 1.2rem; display: inline-block; width: fit-content; }
   #live-desc { font-size: 1.5rem; line-height: 1.5; color: #ccc; max-width: 480px; }
